@@ -2,3 +2,6 @@
 __pycache__
 venv
 node_modules
+client.txt
+tidal-curls.txt
+tidal-rest-api-curl-examples.txt
