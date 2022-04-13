@@ -1,8 +1,9 @@
+import argparse
 import json
 import requests
 import base64
-import pprint
 from types import SimpleNamespace
+
 
 class SpotifyClient:
 
@@ -11,8 +12,15 @@ class SpotifyClient:
         self.SPOTIFY_API_URL = "https://api.spotify.com"
         self.SPOTIFY_ACCOUNTS_URL = "https://accounts.spotify.com/api/token"
 
-        # ENDPOINTS
+        '''
+        ENDPOINTS
+        '''
+        # USER
+
+        # PLAYLISTS
         self.GET_PLAYLIST = "/v1/playlists/{}"
+        self.GET_CURRENT_USERS_PLAYLISTS = "/me/playlists"
+        self.GET_USERS_PLAYLISTS = "/users/{}/playlists"
 
         # HEADERS
         self.AUTHORIZATION_HEADER = "Authorization"
@@ -43,37 +51,58 @@ class SpotifyClient:
 
         return access_token
 
+    def form_full_api_url(self, endpoint):
+        full_url = "".join([self.SPOTIFY_API_URL, endpoint])
+        print("full_url: {}".format(full_url))
+
+        return full_url
+
     def make_get_playlist_call(self, url, headers=None):
         if headers is None:
             headers = self.base_headers
 
-        get_playlist_response = requests.get(url=url,headers=headers)
+        get_playlist_response = requests.get(url=url, headers=headers)
 
         return get_playlist_response
 
-    def get_playlist(self,playlist_id):
+    def get_playlist(self, playlist_id):
         playlist_endpoint = self.GET_PLAYLIST.format(playlist_id)
-        url = "".join([self.SPOTIFY_API_URL,playlist_endpoint])
+        url = self.form_full_api_url(playlist_endpoint)
         print("getting playlist at {}".format(url))
 
         get_playlist_response = self.make_get_playlist_call(url=url)
 
-        get_playlist_response_json = json.loads(get_playlist_response.text, object_hook=lambda d: SimpleNamespace(**d))
-        get_playlist_tracks_json = get_playlist_response_json.tracks
+        # get_playlist_response_json = json.loads(get_playlist_response.text, object_hook=lambda d: SimpleNamespace(**d))
+        get_playlist_response_json = get_playlist_response.json()
+        get_playlist_tracks_json = get_playlist_response_json["tracks"]
 
-        while get_playlist_tracks_json.next is not None:
-            next_url = get_playlist_tracks_json.next
+        while get_playlist_tracks_json["next"] is not None:
+            next_url = get_playlist_tracks_json["next"]
             next_get_playlist_response = self.make_get_playlist_call(url=next_url)
-            get_playlist_tracks_json = json.loads(next_get_playlist_response.text, object_hook=lambda d: SimpleNamespace(**d))
+            # get_playlist_tracks_json = json.loads(next_get_playlist_response.text, object_hook=lambda d: SimpleNamespace(**d))
+            get_playlist_tracks_json = next_get_playlist_response.json()
 
-            playlist_items_results_json = get_playlist_tracks_json.items
+            playlist_items_results_json = get_playlist_tracks_json["items"]
 
             for item in playlist_items_results_json:
-                get_playlist_response_json.tracks.items.append(item)
-            get_playlist_response_json.tracks.next = get_playlist_tracks_json.next
-
+                get_playlist_response_json["tracks"]["items"].append(item)
+            get_playlist_response_json["tracks"]["next"] = get_playlist_tracks_json["next"]
 
         return get_playlist_response_json
 
+    def store_playlist_json(self, playlist_json):
+        playlist_name = playlist_json["name"]
+        playlist_id = playlist_json["id"]
+
+        playlist_file_name = "{}_{}{}".format(playlist_name, playlist_id, ".json")
+
+        with open(playlist_file_name, "w") as playlist_file:
+            playlist_file.write(json.dumps(playlist_json, indent=4,ensure_ascii=False))
 
 
+    def get_current_users_playlists(self):
+        url = self.form_full_api_url(self.GET_CURRENT_USERS_PLAYLISTS)
+
+        get_current_users_playlists_response = requests.get(url, headers=self.base_headers)
+
+        return get_current_users_playlists_response
