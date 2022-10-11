@@ -1,12 +1,14 @@
 import unittest
 import os
+
+
 from spotify_export import SpotifyClient
 
 
 class SpotifyClientTest(unittest.TestCase):
 
     def setUp(self):
-        client_id = os.environ.get("SPOTIFY_CLIENT_ID")
+        client_id = os.environ["SPOTIFY_CLIENT_ID"]
         client_secret = os.environ.get("SPOTIFY_CLIENT_SECRET")
 
         self.spotify_client = SpotifyClient(client_id=client_id, client_secret=client_secret)

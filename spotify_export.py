@@ -1,8 +1,6 @@
-import argparse
 import json
 import requests
 import base64
-from types import SimpleNamespace
 
 
 class SpotifyClient:
@@ -30,7 +28,8 @@ class SpotifyClient:
         }
 
     def get_bearer_token(self, client_id, client_secret):
-        client_basic_combined = str(base64.b64encode('{}:{}'.format(client_id, client_secret).encode("utf-8")), "utf-8")
+        client_combined=client_id + ":" + client_secret
+        client_basic_combined = str(base64.b64encode(client_combined.encode("utf-8")),"utf-8")
 
         basic_auth_request_headers = {
             self.AUTHORIZATION_HEADER: "Basic {}".format(client_basic_combined)
