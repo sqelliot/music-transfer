@@ -2,7 +2,7 @@ import unittest
 import os
 
 
-from spotify_export import SpotifyClient
+from spotify_export import SpotifyClient, store_playlist_json
 
 
 class SpotifyClientTest(unittest.TestCase):
@@ -27,7 +27,7 @@ class SpotifyClientTest(unittest.TestCase):
                                                        ".json")
         playlist_json = self.spotify_client.get_playlist(self.SQUELLIOTT_PLAYLIST_ID)
 
-        self.spotify_client.store_playlist_json(playlist_json=playlist_json)
+        store_playlist_json(playlist_json=playlist_json)
 
         self.assertTrue(os.path.exists(expected_playlist_file_name),
                         "Expected file name of: {}".format(expected_playlist_file_name))
